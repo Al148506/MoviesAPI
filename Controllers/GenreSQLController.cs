@@ -1,59 +1,78 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
+using MoviesAPI.DTOs;
 using MoviesAPI.Entities;
+using MoviesAPI.Models;
 using MoviesAPI.TestEntities;
+using MoviesAPI.Utilities;
 
 namespace MoviesAPI.Controllers
 { 
     [Route("api/[controller]")]
     [ApiController]
-    public class GenreSQLController : ControllerBase
+    public class GenreSQLController : CustomBaseController
     {
        
         private readonly IOutputCacheStore outputCacheStore;
+        private readonly ApplicationDbContext context;
+        private readonly IMapper mapper;
         private const string cacheTag = "genres";
 
         public GenreSQLController(IRepository repository,
-            IOutputCacheStore outputCacheStore
-
-            )
+            IOutputCacheStore outputCacheStore, ApplicationDbContext context,
+            IMapper mapper)
+            :base(context, mapper, outputCacheStore,cacheTag)
         {
         
             this.outputCacheStore = outputCacheStore;
-    
+            this.context = context;
+            this.mapper = mapper;
         }
 
         [HttpGet] //api/genre
         [OutputCache(Tags = [cacheTag])]
-        public List<Genre> Get()
+        public async Task<List<GenreDTO>> Get([FromQuery] PaginationDTO pagination)
         {
-            return new List<Genre>() { new Genre { Id = 1, Name = "Comedy" }, new Genre { Id = 2, Name = "Action" } };
+            return await Get<Genre,GenreDTO>(pagination, orderBy: g=>g.Name);
+     
+          
+        }
+        [HttpGet("all")] //api/genre/all
+        [OutputCache(Tags = [cacheTag])]
+        public async Task<List<GenreDTO>> Get()
+        {
+            return await Get<Genre, GenreDTO>(orderBy: g => g.Name);
+
+
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}",Name = "ObtainGenreById")]
         [OutputCache(Tags = [cacheTag])]
-        public async Task<ActionResult<Genre>> GetById(int id)
+        public async Task<ActionResult<GenreDTO>> GetById(int id)
         {
-            throw new NotImplementedException();
+           return await Get<Genre, GenreDTO>(id);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateGenre([FromBody] Genre genre)
+        public async Task<IActionResult> CreateGenre([FromBody] GenreCreationDTO genreCreationDTO)
         {
-            throw new NotImplementedException();
+            return await Post<GenreCreationDTO, Genre, GenreDTO>(genreCreationDTO, "ObtainGenreById");
+           
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateGenre(int id, [FromBody] Genre genre)
+        public async Task<IActionResult> UpdateGenre(int id, [FromBody] GenreCreationDTO genreCreationDTO)
         {
-            throw new NotImplementedException();
+            return await Put<GenreCreationDTO, Genre>(id, genreCreationDTO);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteGenre(int id)
         {
-
-            throw new NotImplementedException();
+            return await Delete<Genre>(id);
         }
     }
 }

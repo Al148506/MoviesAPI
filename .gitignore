@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignorar archivos dentro de wwwroot/actors y wwwroot/movies
+wwwroot/actors/*
+wwwroot/movies/*
+
+# Pero no ignorar las carpetas en sí
+!wwwroot/actors/.gitkeep
+!wwwroot/movies/.gitkeep
