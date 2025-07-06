@@ -369,3 +369,6 @@ wwwroot/movies/*
 # Pero no ignorar las carpetas en sí
 !wwwroot/actors/.gitkeep
 !wwwroot/movies/.gitkeep
+appsettings.json
+appsettings.Development.json
+appsettings.*.json
