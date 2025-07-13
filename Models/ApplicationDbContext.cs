@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MoviesAPI.Entities;
 
 namespace MoviesAPI.Models
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {
@@ -27,6 +28,8 @@ namespace MoviesAPI.Models
         public DbSet<MovieGenre> MoviesGenres { get; set; }
         public DbSet<MovieActor> MoviesActors { get; set; }
         public DbSet<MovieCinema> MoviesCinemas { get; set; }
+
+        public DbSet<Rating> RatingMovies { get; set; }
 
 
     }

@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.OutputCaching;
@@ -14,26 +16,30 @@ namespace MoviesAPI.Controllers
 {
     [Route("api/movies")]
     [ApiController]
+    [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme)]
     public class MoviesController : CustomBaseController
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
         private readonly IOutputCacheStore outputCacheStore;
         private readonly IStorageFiles storageFiles;
+        private readonly IUserServices userServices;
         private const string cacheTag = "movies";
         private readonly string container = "movies";
 
-        public MoviesController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore, IStorageFiles storageFiles)
+        public MoviesController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore, IStorageFiles storageFiles, IUserServices userServices)
             :base(context, mapper, outputCacheStore, cacheTag)
         {
             this.context = context;
             this.mapper = mapper;
             this.outputCacheStore = outputCacheStore;
             this.storageFiles = storageFiles;
+            this.userServices = userServices;
         }
 
         [HttpGet("landing")]
         [OutputCache(Tags = [cacheTag])]
+        [AllowAnonymous]
         public async Task<ActionResult<LandingPageDTO>> Get()
         {
             var top = 6;
@@ -59,7 +65,7 @@ namespace MoviesAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "GetMovieById")]
-        [OutputCache(Tags = [cacheTag])]
+        [AllowAnonymous]
         public async Task<ActionResult<MovieDetailsDTO>> Get(int id)
         {
             var movie = await context.Movies
@@ -70,10 +76,35 @@ namespace MoviesAPI.Controllers
             {
                 return NotFound();
             }
+
+            var averageVote = 0.0;
+            var userVote = 0;
+
+            if (await context.RatingMovies.AnyAsync(r => r.MovieId == id))
+            {
+                averageVote = await context.RatingMovies.Where(r => r.MovieId == id).AverageAsync(r => r.Score);
+
+                if (HttpContext.User.Identity!.IsAuthenticated)
+                {
+                    var userId = await userServices.ObtainUserId();
+
+                    var ratingDB = await context.RatingMovies
+                        .FirstOrDefaultAsync(r => r.UserId == userId && r.MovieId == id);
+
+                    if (ratingDB is not null)
+                    {
+                        userVote = ratingDB.Score;
+                    }
+                }
+            }
+
+            movie.AverageVote = averageVote;
+            movie.UserVote = userVote;
             return movie;
         }
 
         [HttpGet("filter")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<MovieDTO>>> Filter([FromQuery] MoviesFilterDTO moviesFilterDTO)
         {
             var moviesQueryable = context.Movies.AsQueryable();

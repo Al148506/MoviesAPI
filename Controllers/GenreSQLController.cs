@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,7 @@ namespace MoviesAPI.Controllers
 { 
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isadmin")]
     public class GenreSQLController : CustomBaseController
     {
        
@@ -40,8 +43,10 @@ namespace MoviesAPI.Controllers
      
           
         }
+
         [HttpGet("all")] //api/genre/all
         [OutputCache(Tags = [cacheTag])]
+        [AllowAnonymous]
         public async Task<List<GenreDTO>> Get()
         {
             return await Get<Genre, GenreDTO>(orderBy: g => g.Name);
