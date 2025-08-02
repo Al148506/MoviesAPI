@@ -4,7 +4,7 @@
 > ASP.NET Web API backend for a full-stack cinema system using Angular, SQL Server, and Docker.  
 > **Live URL**: [https://portfolioacg.com](https://portfolioacg.com)  
 > **Backend Repo**: [https://github.com/Al148506/MoviesAPI](https://github.com/Al148506/MoviesAPI)
- **Frontend Repo**: 
+ **Frontend Repo**: [https://github.com/Al148506/MoviesAngular](https://github.com/Al148506/MoviesAngular) 
 
 ---
 
