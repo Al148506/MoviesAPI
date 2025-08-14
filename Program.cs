@@ -32,7 +32,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 );
 
 builder.Services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
-builder.Services.AddTransient<IStorageFiles, StorageArchivesLocal>();
+builder.Services.AddTransient<IStorageFiles, StorageArchivesAzure>();
 builder.Services.AddTransient<IUserServices, UserServices>();
 
 builder.Services.AddHttpContextAccessor();

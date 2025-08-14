@@ -373,3 +373,6 @@ wwwroot/movies/*
 appsettings.json
 appsettings.Development.json
 appsettings.*.json
+.env
+
+/Controllers/GenreNoSqlController.cs

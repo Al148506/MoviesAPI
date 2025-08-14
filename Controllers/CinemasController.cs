@@ -12,14 +12,14 @@ namespace MoviesAPI.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isadmin")]
-    public class CinemaController : CustomBaseController
+    public class CinemasController : CustomBaseController
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
         private readonly IOutputCacheStore output;
         private const string cacheTag = "cinemas";
 
-        public CinemaController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore output)
+        public CinemasController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore output)
             : base(context, mapper, output, cacheTag)
         {
             this.context = context;

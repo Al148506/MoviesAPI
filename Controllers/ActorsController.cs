@@ -17,7 +17,7 @@ namespace MoviesAPI.Controllers
     [ApiController]
     [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme, Policy = "isadmin")]
 
-    public class ActorController : CustomBaseController
+    public class ActorsController : CustomBaseController
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
@@ -26,7 +26,7 @@ namespace MoviesAPI.Controllers
         private const string cacheTag = "actors";
         private readonly string container = "actors";
 
-        public ActorController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore, IStorageFiles storageFiles)
+        public ActorsController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore, IStorageFiles storageFiles)
                : base(context, mapper,outputCacheStore,cacheTag)
         {
             this.context = context;
