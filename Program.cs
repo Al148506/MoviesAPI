@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,82 +12,132 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ========================
+// Kestrel (Azure PORT)
+// ========================
 builder.WebHost.ConfigureKestrel(options =>
 {
     var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
     options.ListenAnyIP(int.Parse(port));
 });
 
+// ========================
+// Controllers & Swagger
+// ========================
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton(provider => new MapperConfiguration(cfg =>
-    {
-      var geometryFactory = provider.GetRequiredService<GeometryFactory>();
-      cfg.AddProfile(new AutoMapperProfiles(geometryFactory));
-    }).CreateMapper());
 
-builder.Services.AddSingleton<IRepository, RepositorySqlServer>();
+// ========================
+// AutoMapper
+// ========================
+builder.Services.AddSingleton(provider =>
+{
+    var geometryFactory = provider.GetRequiredService<GeometryFactory>();
+    return new MapperConfiguration(cfg =>
+    {
+        cfg.AddProfile(new AutoMapperProfiles(geometryFactory));
+    }).CreateMapper();
+});
+
+// ========================
+// Database
+// ========================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer("name=DefaultConnection", sqlServer =>
-        sqlServer.UseNetTopologySuite()
+    options.UseSqlServer(
+        "name=DefaultConnection",
+        sqlServer => sqlServer.UseNetTopologySuite()
     )
 );
 
-builder.Services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
+// ========================
+// Services
+// ========================
+builder.Services.AddSingleton<IRepository, RepositorySqlServer>();
 builder.Services.AddTransient<IStorageFiles, StorageArchivesAzure>();
 builder.Services.AddTransient<IUserServices, UserServices>();
 
+builder.Services.AddSingleton<GeometryFactory>(
+    NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326)
+);
+
 builder.Services.AddHttpContextAccessor();
+
+// ========================
+// Output Cache
+// ========================
 builder.Services.AddOutputCache(options =>
 {
     options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(15);
 });
 
+// ========================
+// Identity
+// ========================
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped < UserManager<IdentityUser>>();
+builder.Services.AddScoped<UserManager<IdentityUser>>();
 builder.Services.AddScoped<SignInManager<IdentityUser>>();
 
-builder.Services.AddAuthentication().AddJwtBearer(options =>
-{
-    options.MapInboundClaims = false;
-
-    options.TokenValidationParameters = new TokenValidationParameters
+// ========================
+// Authentication (JWT)
+// ========================
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["keyjwt"]!)),
-        ClockSkew = TimeSpan.Zero
-    };
-});
+        options.MapInboundClaims = false;
 
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["keyjwt"]!)
+            ),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// ========================
+// Authorization
+// ========================
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("isadmin", policy => policy.RequireClaim("isadmin"));
 });
 
-var allowedOrigins = builder.Configuration.GetValue<string>("AllowedOrigins")!.Split(",");
+// ========================
+// CORS (🔥 CLAVE 🔥)
+// ========================
+var allowedOrigins = builder.Configuration
+    .GetValue<string>("AllowedOrigins")!
+    .Split(",", StringSplitOptions.RemoveEmptyEntries);
+
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(optionsCORS =>
+    options.AddPolicy("AllowAngular", policy =>
     {
-        optionsCORS.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader()
-        .WithExposedHeaders("total-records-quantity");
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithExposedHeaders("total-records-quantity");
     });
 });
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-    app.UseSwagger();
-    app.UseSwaggerUI();
+// ========================
+// Middleware Pipeline
+// ========================
+app.UseSwagger();
+app.UseSwaggerUI();
 
+// Debug DB info (opcional)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -99,11 +149,13 @@ app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
-app.UseCors();
+// 🔥 CORS ANTES de Auth
+app.UseCors("AllowAngular");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseOutputCache();
-
-app.UseAuthorization();
 
 app.MapControllers();
 
