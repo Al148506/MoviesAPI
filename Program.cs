@@ -13,6 +13,11 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.WebHost.ConfigureKestrel(options =>
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    options.ListenAnyIP(int.Parse(port));
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
