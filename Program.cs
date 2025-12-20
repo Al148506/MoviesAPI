@@ -117,17 +117,30 @@ var allowedOrigins = builder.Configuration
     .GetValue<string>("AllowedOrigins")!
     .Split(",", StringSplitOptions.RemoveEmptyEntries);
 
-builder.Services.AddCors(options =>
+if(allowedOrigins.Length == 0)
 {
-    options.AddPolicy("AllowAngular", policy =>
+    Console.WriteLine("Error al leer la variable de AllowedOrigins");
+}
+else
+{
+    Console.WriteLine("AllowedOrigins:");
+    foreach (var origin in allowedOrigins)
     {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .WithExposedHeaders("total-records-quantity");
+        Console.WriteLine($" - {origin}");
+    }
+}
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAngular", policy =>
+        {
+            policy
+                .WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithExposedHeaders("total-records-quantity");
+        });
     });
-});
 
 var app = builder.Build();
 
