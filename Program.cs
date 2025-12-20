@@ -166,6 +166,19 @@ app.UseHttpsRedirection();
 // 🔥 CORS ANTES de Auth
 app.UseCors("AllowAngular");
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == HttpMethods.Options)
+    {
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        await context.Response.CompleteAsync();
+        return;
+    }
+
+    await next();
+});
+
+
 app.UseAuthentication();
 app.UseAuthorization();
 
