@@ -8,6 +8,7 @@ using MoviesAPI.TestEntities;
 using MoviesAPI.Utilities;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.Index.HPRtree;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -119,14 +120,14 @@ var allowedOrigins = builder.Configuration
 
 if(allowedOrigins.Length == 0)
 {
-    Console.WriteLine("Error al leer la variable de AllowedOrigins");
+    System.Diagnostics.Trace.TraceInformation("Error al leer la variable de AllowedOrigins");
 }
 else
 {
-    Console.WriteLine("AllowedOrigins:");
+    System.Diagnostics.Trace.TraceInformation("AllowedOrigins:");
     foreach (var origin in allowedOrigins)
     {
-        Console.WriteLine($" - {origin}");
+       System.Diagnostics.Trace.TraceInformation($" - {origin}");
     }
 }
 
