@@ -184,6 +184,22 @@ app.UseAuthorization();
 
 app.UseOutputCache();
 
+app.MapGet("/debug/allowed-origins", (IConfiguration config) =>
+{
+    var rawValue = config["AllowedOrigins"];
+
+    return Results.Ok(new
+    {
+        rawAllowedOrigins = rawValue,
+        parsedOrigins = rawValue?
+            .Split(",", StringSplitOptions.RemoveEmptyEntries)
+            .Select(o => o.Trim())
+            .ToArray(),
+        environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+    });
+});
+
+
 app.MapControllers();
 
 app.Run();

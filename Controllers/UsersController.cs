@@ -117,6 +117,8 @@ namespace MoviesAPI.Controllers
             return NoContent();
         }
 
+
+
         private IEnumerable<IdentityError> BuildLoginFailed()
         {
             var identityError = new IdentityError() { Description = "Login failed" };
