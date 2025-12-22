@@ -199,6 +199,17 @@ app.MapGet("/debug/allowed-origins", (IConfiguration config) =>
     });
 });
 
+app.MapGet("/debug/azure-connection", (IConfiguration config) =>
+{
+    var azureStorageConnection = config["AzureStorageConnection"];
+
+    return Results.Ok(new
+    {
+        azureStorageConnection = string.IsNullOrEmpty(azureStorageConnection) ? "Not configured" : $"Configured {azureStorageConnection}"
+
+    });
+});
+
 
 app.MapControllers();
 
